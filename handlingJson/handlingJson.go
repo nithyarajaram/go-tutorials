@@ -4,7 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 )
+
+var client *http.Client
 
 type catfact struct {
 	Fact   string `json:"fact"`
@@ -22,7 +25,7 @@ func getCatFact() (string, error) {
 
 func getJson(url string) (string, error) {
 
-	resp, err := http.Get(url)
+	resp, err := client.Get(url)
 	if err != nil {
 		return "", err
 	}
@@ -41,6 +44,8 @@ func getJson(url string) (string, error) {
 }
 
 func main() {
+
+	client = &http.Client{Timeout: 10 * time.Second}
 
 	catfact, err := (getCatFact())
 	if err != nil {
