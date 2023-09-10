@@ -11,35 +11,74 @@ var client *http.Client
 
 type catfact struct {
 	Fact   string `json:"fact"`
-	Length int
+	Length int    `json:"length"`
 }
 
-func getCatFact() (string, error) {
+type randomUser struct {
+	Results []userResult
+}
+
+type userResult struct {
+	Gender  string
+	Name    userName
+	Email   string
+	Picture userPicture
+}
+
+type userName struct {
+	First string
+	Last  string
+}
+
+type userPicture struct {
+	Large  string
+	Medium string
+}
+
+func getCatFact() {
 
 	url := "https://catfact.ninja/fact"
-	fact, err := getJson(url)
-	catfact := fmt.Sprintf(fact)
-	return catfact, err
+	var r catfact
+	err := getJson(url, &r)
+	if err != nil {
+		fmt.Printf("Error getting catfact %s", err)
+	} else {
+		fmt.Println("A super intersting catfact", r.Fact)
 
+	}
 }
 
-func getJson(url string) (string, error) {
+func getRandomUser() {
+	url := "https://randomuser.me/api/"
+	var user randomUser
+	err := getJson(url, &user)
+	if err != nil {
+		fmt.Printf("Error getting random user %s", err)
+	} else {
+		fmt.Printf("User info: \nGender: %s \nFirst Name: %s \nLast Name: %s \nPicture: %s\n",
+			user.Results[0].Gender,
+			user.Results[0].Name.First,
+			user.Results[0].Name.Last,
+			user.Results[0].Picture.Medium)
+	}
+}
+
+func getJson(url string, target interface{}) error {
 
 	resp, err := client.Get(url)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	defer resp.Body.Close()
 
-	var r catfact
+	//var r catfact
 
 	dec := json.NewDecoder(resp.Body)
-	if err := dec.Decode(&r); err != nil {
-		return "", err
+	if err := dec.Decode(&target); err != nil {
+		return err
 	}
-	catfact := fmt.Sprintf(r.Fact)
-	return catfact, nil
+	return nil
 
 }
 
@@ -47,10 +86,19 @@ func main() {
 
 	client = &http.Client{Timeout: 10 * time.Second}
 
-	catfact, err := (getCatFact())
-	if err != nil {
-		fmt.Printf("Could not get catfact %d", err)
+	getCatFact()
+	getRandomUser()
+
+	catfact2 := catfact{
+		Fact:   "Random fact",
+		Length: 12,
 	}
-	fmt.Println(catfact)
+
+	jsonStr, err := json.Marshal(catfact2)
+	if err != nil {
+		fmt.Println("Unable to Marshal", err)
+	} else {
+		fmt.Printf("The marshaled string is: %s\n", string(jsonStr))
+	}
 
 }
